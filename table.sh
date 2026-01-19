@@ -140,23 +140,21 @@ list_tables () {
         read -p "Press Enter to continue..."
         return
     fi
-
+    echo "-----------------------------"
     echo "Tables in database '$dbName':"
+    echo "-----------------------------"
 
-    local found_tables=0
 
     for file in "$DB_PATH"/*.meta; do
         if [[ -f "$file" ]]; then
-            echo "-------List Of Tables--------"
             echo "  - $(basename "$file" .meta)"
             echo "------------------------------"
-            found_tables=1
+            else 
+            echo "  No tables found."
+            echo "------------------------------"
+
         fi
     done
-
-    if (( found_tables == 0 )); then
-        echo "  No tables found."
-    fi
 
     read -p "Press Enter to return to Table Menu..."
 }
