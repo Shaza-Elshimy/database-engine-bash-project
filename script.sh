@@ -16,7 +16,7 @@ source ./table.sh
 
 
 if [[ ! -d ./DBMS ]]; then
-   echo "create DBMS ..."
+   echo "$Green create DBMS ... $Reset"
    mkdir ./DBMS
    sleep 1
 fi
@@ -36,11 +36,12 @@ do
            echo -e " $Red DBMS not Found , i will create one $Reset"
             mkdir ./DBMS
             sleep 1
-            echo "DBMS is created."
+            echo "$Green DBMS is created. $Reset"
         fi
         while true
         do
-            read  -r -p "Enter your DB Name:" dbName
+             echo -ne "${Cyan} Enter your DB Name: ${Reset}"
+            read  -r dbName
 
             case  $dbName in
             "")
@@ -62,7 +63,7 @@ do
                     sleep 1
 
                     if (($? == 0));then 
-                        echo -e "$Green DB is Created ...... $Reset"
+                        echo -e "$Green DB is Created  $Reset"
                     else 
                         echo -e "$Red Error : DB not created $Reset"
                     fi 
@@ -85,33 +86,34 @@ do
            echo -e "$Red DBMS not Found , i will create one $Reset"
             mkdir ./DBMS
             sleep 1
-            echo "DBMS is created."
+            echo "$Green DBMS is created. $Reset"
             continue
         fi
 
         dbs=$(ls -F ./DBMS | grep '/' | tr -d '/')
         if [[ -z $dbs ]] ;then
-          echo "NO Databases Found..."
+          echo "$Red NO Databases Found... $Reset"
         else
-          echo "-------List Of Databases--------"
+          echo -e "$Cyan -------List Of Databases-------- $Reset"
           ls -F ./DBMS | grep '/' | tr -d '/'
-          echo "--------------------------------"
+          echo -e "$Cyan -------------------------------- $Reset"
         fi
-        sleep 5
+        sleep 6
         break
     ;;
     3 | "ConnectDB" )
-        echo -e "$Green Your Choise is ConnectDB....... $Reset"
+        echo -e "$Blue Your Choise is ConnectDB....... $Reset"
 
         if [[ ! -d ./DBMS ]] ;then 
            echo -e " $Red DBMS not Found , i will create one $Reset"
             mkdir ./DBMS
             sleep 1
-            echo "DBMS is created."
+            echo -e "$Green DBMS is created. $Reset"
         fi
         while true
         do
-            read  -r -p "Enter your DB Name to connect:" dbName
+            echo -ne "${Cyan} Enter your DB Name to connect: ${Reset}"
+             read -r  dbName
 
             case  $dbName in
             "")
@@ -132,7 +134,7 @@ do
             
                     export PS3="$dbName>>" 
                     table_menu  "$dbName" 
-                    export PS3="db_project>>"
+                    export PS3="$dbName>>"
                     sleep 1
                     break
                     if (($? == 0));then 
@@ -162,7 +164,9 @@ do
         fi
         while true
         do
-            read  -r -p "Enter your DB Name to remove:" dbName
+          echo -ne "${Cyan}Enter your DB Name to remove: ${Reset}"
+           read -r dbName
+
 
             case  $dbName in
             "")
@@ -175,16 +179,16 @@ do
             echo -e "$Red Error : Name of DB Can't Start Numbers $Reset"
             ;;
             *[!a-zA-Z0-9_]* )
-            echo -e "$Red Error 104: Name of Folder Contains Special Character : $Reset"  
+            echo -e "$Red Error 104: Name of Folder Contains Special Character  $Reset"  
             ;;
             *)
                 if [[ -d ./DBMS/$dbName ]];then 
-                    echo "Wait remove $dbName ......"
+                    echo -e "$Yellow Wait remove $dbName ...... $Reset"
                     rm -r ./DBMS/$dbName
                     sleep 1
                     
                     if (($? == 0));then 
-                        echo " DB removed successfully ......"
+                        echo -e "$Green DB removed successfully .. $Reset"
                     else 
                         echo -e "$Red Error : DB remove failed $Reset"
                     fi 
@@ -200,22 +204,23 @@ do
         break
     ;;
     5 | "Exit" )
-    echo " Your Choice is Exit ..."
-    read -p ", Are you sure : y / n :" sure
+    echo -e "$Blue Your Choice is Exit ... $Reset"
+    echo -ne "${Yellow} Are you sure : y / n :${Reset} " 
+    read -r sure
     if [[ $sure == "y" ]] ;then
-    echo "Program Exited"
+    echo -e "$Green Program Exited $Reset"
       exit
     elif [[ $sure == "n" ]] ;then
-      echo "program still running...."
+      echo -e "$Cyan program still running.... $Reset"
       break
     else
-      echo "please choose y or n"
+      echo -e "$Yellow please choose y or n $Reset"
     fi
     # 
     break
     ;;
     *)
-        echo "Your Choise Not Found ......." 
+        echo -e "$Red Your Choise Not Found ! $Reset" 
         #
         break
     ;;

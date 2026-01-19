@@ -18,26 +18,27 @@ create_table() {
 
     # check database exists
     if [ ! -d "$DB_PATH" ]; then
-        echo "Database not found"
+        echo -e "$Red Database not found $Reset"
         return
     fi
 
     # table name
     while true; do
-        read -p "Enter Table Name (Enter to cancel): " tableName
+        echo -ne "${Cyan} Enter Table Name (Enter to cancel): ${Reset}" 
+         read -e tableName
 
         if [ -z "$tableName" ]; then
-            echo "Cancelled"
+            echo -e "$Red Cancelled $Reset"
             return
         fi
 
         case $tableName in
             *" "*|[0-9]*|*[!a-zA-Z0-9_]*)
-                echo "Invalid table name"
+                echo -e "$Red Invalid table name $Reset"
                 ;;
             *)
                 if [ -f "$DB_PATH/$tableName.meta" ]; then
-                    echo "Table already exists"
+                    echo -e "$Red Table already exists $Reset"
                 else
                     break
                 fi
