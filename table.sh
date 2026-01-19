@@ -310,6 +310,7 @@ select_from_table() {
     echo "1) Select all"
     echo "2) Select by PK"
     echo "3) Select with condition (column=value)"
+    echo "4) Select column by name"
     read -p "Choose option(Enter to cancel): " option
 
     if [[ -z "$option" ]] ; then
@@ -398,6 +399,33 @@ select_from_table() {
 
                     done
                 ;;
+        4)
+
+                while true; do
+                    read -p "Enter column name to select (Enter to cancel): " colName
+
+                    if [[ -z "$colName" ]]; then
+                        echo "Cancelled"
+                        break
+                    fi
+
+                    colIndex=$(awk -F: -v c="$colName" '$1==c {print NR; exit}' "$DB_PATH/$tableName.meta")
+
+                    if [[ -z "$colIndex" ]]; then
+                        echo "Column not found"
+                        continue
+                    fi
+
+                    echo "----------------------------"
+                    echo "Column: $colName"
+                    echo "----------------------------"
+
+                    awk -F: -v idx="$colIndex" '{print $idx}' "$DB_PATH/$tableName.data"
+
+                    echo "----------------------------"
+                    break
+                done
+                ;;        
         
 
         *)
