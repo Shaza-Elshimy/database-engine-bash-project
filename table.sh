@@ -223,9 +223,6 @@ while true; do
             continue
         fi
 
-        break
-    done
-    
 
     echo "Enter values:"
 
@@ -274,6 +271,7 @@ while true; do
 
     echo "$record" >> "$DB_PATH/$tableName.data"
     echo "Record inserted successfully"
+done
 }
 
 print_headers(){
@@ -305,10 +303,8 @@ select_from_table() {
             continue
         fi
 
-        break
-    done
 
-    # 2) اعرض اختيار المستخدم
+
     while true 
     do
     echo "1) Select all"
@@ -402,14 +398,16 @@ select_from_table() {
 
                     done
                 ;;
+        
 
         *)
             echo "Invalid option"
             ;;
     esac
     done
+ done   
 
-    # read -p "Press Enter to return to Table Menu..."
+    read -p "Press Enter to return to Table Menu..."
 }
 
 
@@ -550,6 +548,190 @@ delete_from_table() {
     done
 }
 
+
+update_table() {
+
+    local dbName="$1"
+    local DB_PATH="./DBMS/$dbName"
+    local tableName
+
+    # اختيار الجدول
+    while true
+    do
+        read -p "Enter table name (Enter to cancel): " tableName
+
+        if [[ -z "$tableName" ]] ; then
+            echo "Cancelled" 
+            return
+        fi
+
+        if [[ ! -f "$DB_PATH/$tableName.meta" ]]  ;then
+            echo "Table not found" 
+            continue
+        fi
+
+    while true
+    do
+        echo "--------------------------------------"
+        echo "1) Update all records"
+        echo "2) Update by PK"
+        echo "3) Update with condition (column=value)"
+        echo "Choose option (Enter to cancel):"
+        echo "--------------------------------------"
+        read option
+
+        if [[ -z "$option" ]] ; then
+            echo "Cancelled" 
+            break
+        fi
+
+        case $option in
+
+        1)
+
+            read -p "Enter column name to update: " col
+
+            colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
+
+            colPK=$(awk -F: -v c="$col" '$1==c {print $3}' "$DB_PATH/$tableName.meta")
+
+            if [[ -z "$colIndex" ]] ; then 
+                echo "Column not found" 
+                continue
+            fi
+
+            if [[ "$colPK" == "PK" ]] ; then
+                echo "Error: primary Key cannot be updated"
+                continue
+            fi
+
+            read -p "Enter new value: " newValue
+
+            awk -F: -v OFS=":" -v idx="$colIndex" -v val="$newValue" '
+            {
+                $idx = val
+                print
+            }' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
+
+            mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
+            echo "All records updated"
+            ;;
+
+        2)
+            pkIndex=$(awk -F: '$3=="PK" {print NR}' "$DB_PATH/$tableName.meta")
+
+            if [[ -z "$pkIndex" ]] ; then
+                echo "No PK defined" 
+                continue
+            fi
+
+            
+            read -p "Enter PK value: " pkValue
+
+            read -p "Enter column name to update: " col
+            colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
+            colPK=$(awk -F: -v c="$col" '$1==c {print $3}' "$DB_PATH/$tableName.meta")
+
+            if [[ -z "$colIndex" ]] ; then
+                echo "Column not found" 
+                continue
+            fi
+            
+            if [[ "$colPK" == "PK" ]] ; then
+                echo "Error: primary Key cannot be updated"
+                continue
+            fi
+
+
+            read -p "Enter new value: " newValue
+
+            awk -F: -v OFS=":" \
+                -v pkIdx="$pkIndex" -v pkVal="$pkValue" \
+                -v uIdx="$colIndex" -v newVal="$newValue" '
+            {
+                if ($pkIdx == pkVal) {
+                    $uIdx = newVal
+                    found=1
+                }
+                print
+            }
+            END {
+                if (!found) exit 1
+            }
+            ' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
+
+            if [[ $? -ne 0 ]]; then
+                echo "No record found"
+                rm "$DB_PATH/tmp.data"
+            else
+                mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
+                echo "Record updated successfully"
+            fi
+            ;;
+
+        3)
+            read -p "Enter condition (column=value): " condition
+            condCol=$(echo "$condition" | cut -d '=' -f1)
+            condVal=$(echo "$condition" | cut -d '=' -f2)
+
+            condIndex=$(awk -F: -v c="$condCol" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
+
+            if [[ -z "$condIndex" ]] ; then  
+                echo "Condition column not found" &
+                continue
+            fi
+
+            read -p "Enter column name to update: " col
+            colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
+
+            if [[ -z "$colIndex" ]] ; then
+                echo "Update column not found" 
+                continue
+            fi
+
+            if [[ "$updIndex" -eq "$pkIndex" ]] ; then 
+                echo "Eror:Promary key cannot be updated"
+                break
+            fi
+
+
+            read -p "Enter new value: " newValue
+
+            awk -F: -v OFS=":" \
+                -v cIdx="$condIndex" -v cVal="$condVal" \
+                -v uIdx="$colIndex" -v newVal="$newValue" '
+            {
+                if ($cIdx == cVal) {
+                    $uIdx = newVal
+                    updated=1
+                }
+                print
+            }
+            END {
+                if (!updated) exit 1
+            }
+            ' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
+
+            if [[ $? -ne 0 ]]; then
+                echo "No records matched condition"
+                rm "$DB_PATH/tmp.data"
+            else
+                mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
+                echo "Records updated successfully"
+            fi
+            ;;
+
+        *)
+            echo "Invalid option"
+            ;;
+        esac
+    done
+    done
+
+    read -p "Press Enter to return to Table Menu..."
+}
+
+
 table_menu () {
 
     local dbName="$1"
@@ -610,11 +792,11 @@ table_menu () {
                     break
                     ;;
 
-                # 7 | "UpdateTable")
-                #     echo "Update Table"
-                #     update_table "$dbName"
-                #     break
-                #     ;;
+                7 | "UpdateTable")
+                    echo "Update Table"
+                    update_table "$dbName"
+                    break
+                    ;;
 
                 8 | "BackToMainMenu")
                     echo "Returning to Main Menu..."
