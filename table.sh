@@ -25,7 +25,7 @@ create_table() {
     # table name
     while true; do
         echo -ne "${Cyan} Enter Table Name (Enter to cancel): ${Reset}" 
-         read -e tableName
+         read -r tableName
 
         if [ -z "$tableName" ]; then
             echo -e "$Red Cancelled $Reset"
@@ -48,17 +48,18 @@ create_table() {
 
     # number of columns
     while true; do
-        read -p "Enter number of columns: " cols
+      echo -ne "${Cyan} Enter number of columns: ${Reset}" 
+         read -r cols
 
         if [ -z "$cols" ]; then
-            echo "Cancelled"
+            echo -e "$Red Cancelled $Reset"
             return
         fi
 
         if [[ $cols =~ ^[1-9][0-9]*$ ]]; then
             break
         else
-            echo "Invalid number"
+            echo -e "$Red Invalid number $Reset"
         fi
     done
 
@@ -69,12 +70,13 @@ create_table() {
 
     # primary key
     while true; do
-        read -p "Enter PK column number (1-$cols): " pk
+      echo -ne  "${Cyan} Enter PK column number (1-$cols): ${Reset}"
+       read -r  pk
 
         if [[ $pk =~ ^[1-9][0-9]*$ ]] && [ "$pk" -ge 1 ] && [ "$pk" -le "$cols" ]; then
             break
         else
-            echo "Invalid PK"
+            echo -e "$Red Invalid PK $Reset"
         fi
     done
 
@@ -83,21 +85,22 @@ create_table() {
 
         # column name
         while true; do
-            read -p "Column $i name: " colName
+           echo -ne  " ${Cyan} Column $i name: ${Reset}" 
+          read -r colName
 
             if [ -z "$colName" ]; then
-                echo "Cancelled"
+                echo -e "$Red Cancelled $Reset "
                 rm -f "$DB_PATH/$tableName.meta" "$DB_PATH/$tableName.data"
                 return
             fi
 
             case $colName in
                 *" "*|[0-9]*|*[!a-zA-Z0-9_]*)
-                    echo "Invalid column name"
+                    echo -e "$Red Invalid column name $Reset"
                     ;;
                 *)
                     if grep -q "^$colName:" "$DB_PATH/$tableName.meta"; then
-                        echo "Duplicate column name"
+                        echo -e "$Red Duplicate column name $Reset"
                     else
                         break
                     fi
@@ -107,12 +110,13 @@ create_table() {
 
         # column type
         while true; do
-            read -p "Column $i type (int/string): " colType
+            echo -ne "${Cyan} Column $i type (int/string): ${Reset}" 
+           read -r colType
 
             if [ "$colType" = "int" ] || [ "$colType" = "string" ]; then
                 break
             else
-                echo "Invalid type"
+                echo -e "$Red Invalid type $Reset"
             fi
         done
 
@@ -124,7 +128,7 @@ create_table() {
         fi
     done
 
-    echo "Table '$tableName' created successfully"
+    echo -e "$Green Table '$tableName' created successfully $Reset"
 }
 
 
@@ -137,27 +141,28 @@ list_tables () {
     local DB_PATH="./DBMS/$dbName"
 
     if [[ ! -d "$DB_PATH" ]]; then
-        echo "Error: Database '$dbName' does not exist."
+        echo -e "$Red Error: Database '$dbName' does not exist. $Reset"
         read -p "Press Enter to continue..."
         return
     fi
-    echo "-----------------------------"
-    echo "Tables in database '$dbName':"
-    echo "-----------------------------"
+    echo -e "$Cyan -----------------------------$Reset"
+    echo -e "$Green Tables in database '$dbName': $Reset"
+    echo -e "$Cyan -----------------------------$Reset"
 
 
     for file in "$DB_PATH"/*.meta; do
         if [[ -f "$file" ]]; then
+          
             echo "  - $(basename "$file" .meta)"
-            echo "------------------------------"
+           
             else 
             echo "  No tables found."
-            echo "------------------------------"
 
         fi
     done
 
-    read -p "Press Enter to return to Table Menu..."
+   echo -ne "$Cyan Press Enter to return to Table Menu... $Reset"
+    read -r 
 }
 
 
@@ -168,34 +173,36 @@ drop_table() {
     local DB_PATH="./DBMS/$dbName"
 
     if [[ ! -d "$DB_PATH" ]]; then
-        echo "Error: Database '$dbName' does not exist."
+        echo -e "$Red Error: Database '$dbName' does not exist.$Reset "
         return
     fi
 
     while true; do
-        read -p "Enter table name to drop: " tableName
+       echo -ne "${Cyan} Enter table name to drop: ${Reset}" 
+        read -r tableName
 
         if [[ -z "$tableName" ]]; then
-            echo "Error: Table name cannot be empty."
+            echo -e "$Red Error: Table name cannot be empty.$Reset "
             continue
         fi
 
         if [[ ! -f "$DB_PATH/${tableName}.meta" ]]; then
-            echo "Error: Table '$tableName' does not exist."
+            echo -e "$Red Error: Table '$tableName' does not exist.$Reset "
             continue
         fi
 
         break
     done
 
-    read -p "Are you sure you want to drop table '$tableName'? (y/n): " confirmation
+        echo -ne "${Yellow} Are you sure you want to drop table '$tableName'? (y/n): ${Reset}" 
+    read -r confirmation
 
     if [[ "$confirmation" == "y" ]]; then
         rm -f "$DB_PATH/${tableName}.meta"
         rm -f "$DB_PATH/${tableName}.data"
-        echo "Table '$tableName' dropped successfully."
+        echo -e "$Green Table '$tableName' dropped successfully. $Reset"
     else
-        echo "Drop table operation cancelled."
+        echo -e "$Red Drop table operation cancelled. $Reset"
     fi
 }
 
@@ -207,20 +214,21 @@ insert_into_table() {
     local tableName record=""
 
 while true; do
-        read -p "Enter table name (Enter to cancel): " tableName
+     echo -ne "${Cyan}Enter table name (Enter to cancel): ${Reset}" 
+         read -r tableName
 
         if [[ -z "$tableName" ]]; then
-            echo "Cancelled"
+            echo -e "$Red Cancelled $Reset"
             return
         fi
 
         if [[ ! -f "$DB_PATH/$tableName.meta" ]]; then
-            echo "Table not found, try again"
+            echo -e "$Red Table not found, try again $Reset"
             continue
         fi
 
         if [[ ! -s "$DB_PATH/$tableName.meta" ]]; then
-            echo "Invalid table (no columns)"
+            echo -e "$Red Invalid table (no columns) $Reset"
             continue
         fi
 
@@ -242,20 +250,20 @@ while true; do
 
             # ممنوع فاضي
             if [[ -z "$value" ]]; then
-                echo "Value required"
+                echo -e "$Red Value required $Reset"
                 continue
             fi
 
             # تحقق من النوع
             if [[ "$colType" == "int" && ! "$value" =~ ^[0-9]+$ ]]; then
-                echo "Invalid input: must be integer"
+                echo -e "$Red Invalid input: must be integer $Reset"
                 continue
             fi
 
             # تحقق من الـ PK uniqueness
             if [[ "$colPK" == "PK" ]]; then
                 if cut -d':' -f1 "$DB_PATH/$tableName.data" | grep -qx "$value"; then
-                    echo "Primary key must be unique"
+                    echo -e "$Red Primary key must be unique $Reset"
                     continue
                 fi
             fi
@@ -268,10 +276,10 @@ while true; do
 
     exec 3<&-
 
-    [[ -z "$record" ]] && echo "Insert failed" && return
+    [[ -z "$record" ]] && echo -e "$Red Insert failed $Reset" && return
 
     echo "$record" >> "$DB_PATH/$tableName.data"
-    echo "Record inserted successfully"
+    echo -e "$Green Record inserted successfully $Reset"
 done
 }
 
@@ -786,49 +794,49 @@ table_menu () {
             case $REPLY in
 
                 1 | "CreateTable" )
-                    echo "Create Table"
+                    echo -e "$Yellow Create Table $Reset"
                     create_table "$dbName"
                     break
                     ;;
 
                 2 | "ListTables")
-                    echo "List Tables"
+                    echo -e "$Yellow List Tables $Reset"
                     list_tables "$dbName"
                     break
                     ;;
 
                 3 | "DropTable")
-                    echo "Drop Table"
+                    echo -e "$Yellow Drop Table $Reset"
                     drop_table "$dbName"
                     break
                     ;;
 
                 4 | "InsertIntoTable")
-                    echo "Insert Into Table"
+                    echo -e "$Yellow Insert Into Table $Reset"
                     insert_into_table "$dbName"
                     break
                     ;;
 
                 5 | "SelectFromTable")
-                    echo "Select From Table"
+                    echo -e "$Yellow Select From Table $Reset"
                     select_from_table "$dbName"
                     break
                     ;;
 
                 6 | "DeleteFromTable")
-                    echo "Delete From Table"
+                    echo -e "$Yellow Delete From Table $Reset"
                     delete_from_table "$dbName"
                     break
                     ;;
 
                 7 | "UpdateTable")
-                    echo "Update Table"
+                    echo -e "$Yellow Update Table $Reset"
                     update_table "$dbName"
                     break
                     ;;
 
                 8 | "BackToMainMenu")
-                    echo "Returning to Main Menu..."
+                    echo -e "$Yellow Returning to Main Menu... $Reset"
                     return
                     ;;
 
