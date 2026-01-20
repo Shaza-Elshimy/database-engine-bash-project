@@ -16,13 +16,13 @@ create_table() {
     dbName="$1"
     DB_PATH="./DBMS/$dbName"
 
-    # check database exists
+   
     if [ ! -d "$DB_PATH" ]; then
         echo -e "$Red Database not found $Reset"
         return
     fi
 
-    # table name
+
     while true; do
         echo -ne "${Cyan} Enter Table Name (Enter to cancel): ${Reset}" 
          read -r tableName
@@ -46,7 +46,7 @@ create_table() {
         esac
     done
 
-    # number of columns
+    
     while true; do
       echo -ne "${Cyan} Enter number of columns: ${Reset}" 
          read -r cols
@@ -63,12 +63,12 @@ create_table() {
         fi
     done
 
-    # create files
+   
     touch "$DB_PATH/$tableName.meta"
     touch "$DB_PATH/$tableName.data"
     > "$DB_PATH/$tableName.meta"
 
-    # primary key
+   
     while true; do
       echo -ne  "${Cyan} Enter PK column number (1-$cols): ${Reset}"
        read -r  pk
@@ -80,10 +80,10 @@ create_table() {
         fi
     done
 
-    # columns definition
+  
     for (( i=1; i<=cols; i++ )); do
 
-        # column name
+        
         while true; do
            echo -ne  " ${Cyan} Column $i name: ${Reset}" 
           read -r colName
@@ -108,7 +108,7 @@ create_table() {
             esac
         done
 
-        # column type
+      
         while true; do
             echo -ne "${Cyan} Column $i type (int/string): ${Reset}" 
            read -r colType
@@ -241,26 +241,26 @@ while true; do
     do
         while true; do
 
-            # لو PK اكتب جنب الاسم
+         
             if [[ "$colPK" == "PK" ]]; then
                 read -p "$colName ($colType, PK): " value
             else
                 read -p "$colName ($colType): " value
             fi
 
-            # ممنوع فاضي
+         
             if [[ -z "$value" ]]; then
                 echo -e "$Red Value required $Reset"
                 continue
             fi
 
-            # تحقق من النوع
+        
             if [[ "$colType" == "int" && ! "$value" =~ ^[0-9]+$ ]]; then
                 echo -e "$Red Invalid input: must be integer $Reset"
                 continue
             fi
 
-            # تحقق من الـ PK uniqueness
+          
             if [[ "$colPK" == "PK" ]]; then
                 if cut -d':' -f1 "$DB_PATH/$tableName.data" | grep -qx "$value"; then
                     echo -e "$Red Primary key must be unique $Reset"
@@ -287,28 +287,33 @@ print_headers(){
   awk -F: 'BEGIN{ORS=":"} {print $1} END{print ""}' "$DB_PATH/$tableName.meta"
 }
 
+
+
+
+
 select_from_table() {
 
     local dbName="$1"
     local DB_PATH="./DBMS/$dbName"
     local tableName
-
-    # 1) اختر جدول صحيح
+    
+    
     while true; do
-        read -p "Enter table name (Enter to cancel): " tableName
+           echo -ne "${Cyan}Enter table name (Enter to cancel): ${Reset}"
+         read -r tableName
 
         if [[ -z "$tableName" ]]; then
-            echo "Cancelled"
+            echo -e  "$Red Cancelled $Reset"
             return
         fi
 
         if [[ ! -f "$DB_PATH/$tableName.meta" ]]; then
-            echo "Table not found, try again"
+            echo -e "$Red Table not found, try again $Reset"
             continue
         fi
 
         if [[ ! -s "$DB_PATH/$tableName.meta" ]]; then
-            echo "Invalid table (no columns)"
+            echo -e "$Red Invalid table (no columns) $Reset"
             continue
         fi
 
@@ -320,10 +325,11 @@ select_from_table() {
     echo "2) Select by PK"
     echo "3) Select with condition (column=value)"
     echo "4) Select column by name"
-    read -p "Choose option(Enter to cancel): " option
+    echo -ne "${Cyan}Choose option(Enter to cancel): ${Reset}" 
+     read -r option
 
     if [[ -z "$option" ]] ; then
-    echo "Cancelled.."
+    echo -e "$Red Cancelled..$Reset"
     return
     fi
 
@@ -341,20 +347,21 @@ select_from_table() {
             ;;
 
         2)
-            # اقرأ الـ PK column index من الميتا
+           
             pkIndex=$(awk -F: '$3=="PK" {print NR; exit}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$pkIndex" ]]; then
-                echo "No PK defined"
+                echo -e "$Red No PK defined $Reset"
                 return
             fi
 
             while true
             do
-                read -p "Enter PK value (Enter to cancel): " pkValue
+               echo -ne  "${Cyan} Enter PK value (Enter to cancel): ${Reset}"
+                read -r pkValue
 
                 if [[ -z "$pkValue" ]] ; then
-                  echo "Cancelled"
+                  echo -e "$Red Cancelled $Reset"
                   break
                 fi
                 
@@ -364,7 +371,7 @@ select_from_table() {
                 ' "$DB_PATH/$tableName.data")
 
                 if [[ -z "$result" ]] ; then 
-                   echo "No record found"
+                   echo -e "$Red No record found $Reset"
                 else
                     echo "----------------------------------"
                     print_headers "$DB_PATH/$tableName.meta"
@@ -380,7 +387,8 @@ select_from_table() {
 
         3)
          while true; do
-                    read -p "Enter condition (column=value): " condition
+                   echo -ne  "${Cyan} Enter condition (column=value): ${Reset}"
+                    read -r condition
 
                     col=$(echo "$condition" | cut -d'=' -f1)
                     val=$(echo "$condition" | cut -d'=' -f2)
@@ -388,7 +396,7 @@ select_from_table() {
                     colIndex=$(awk -F: -v col="$col" '$1==col {print NR; exit}' "$DB_PATH/$tableName.meta")
 
                     if [[ -z "$colIndex" ]]; then
-                        echo "Column not found"
+                        echo -e "$Red Column not found $Reset-e "
                         break
                     fi
 
@@ -411,17 +419,18 @@ select_from_table() {
         4)
 
                 while true; do
-                    read -p "Enter column name to select (Enter to cancel): " colName
+                echo -ne "${Cyan}Enter column name to select (Enter to cancel): ${Reset}" 
+                     read -r  colName
 
                     if [[ -z "$colName" ]]; then
-                        echo "Cancelled"
+                        echo -e "$Red Cancelled $Reset"
                         break
                     fi
 
                     colIndex=$(awk -F: -v c="$colName" '$1==c {print NR; exit}' "$DB_PATH/$tableName.meta")
 
                     if [[ -z "$colIndex" ]]; then
-                        echo "Column not found"
+                        echo -e "$Red Column not found $Reset"
                         continue
                     fi
 
@@ -438,7 +447,7 @@ select_from_table() {
         
 
         *)
-            echo "Invalid option"
+            echo -e "$Red Invalid option $Reset"
             ;;
     esac
     done
@@ -454,22 +463,23 @@ delete_from_table() {
     local DB_PATH="./DBMS/$dbName"
     local tableName
 
-    # 1) اختر جدول
+
     while true; do
-        read -p "Enter table name (Enter to cancel): " tableName
+       echo -ne "${Cyan} Enter table name (Enter to cancel): ${Reset}" 
+       read -r  tableName
 
         if [[ -z "$tableName" ]]; then
-            echo "Cancelled"
+            echo -e "$Red Cancelled  $Reset"
             return
         fi
 
         if [[ ! -f "$DB_PATH/$tableName.meta" ]]; then
-            echo "Table not found, try again"
+            echo -e "$Red Table not found, try again $Reset"
             continue
         fi
 
         if [[ ! -s "$DB_PATH/$tableName.meta" ]]; then
-            echo "Invalid table (no columns)"
+            echo -e "$Red Invalid table (no columns) $Reset"
             continue
         fi
 
@@ -482,10 +492,11 @@ delete_from_table() {
         echo "2) Delete by PK"
         echo "3) Delete with condition (column=value)"
         echo "--------------------------------------"
-        read -p "Choose option (Enter to cancel): " option
+     echo -ne "${Cyan} Choose option (Enter to cancel): ${Reset}" 
+         read -r option
 
         if [[ -z "$option" ]] ; then
-            echo "Cancelled"
+            echo -e "$Red Cancelled $Reset"
             return
         fi
 
@@ -494,14 +505,15 @@ delete_from_table() {
         1)
         while true
         do
-            read -p "Are you sure you want to delete ALL records? (y/n): " confirm
+            echo -ne "${Yellow} Are you sure you want to delete ALL records? (y/n): ${Reset}" 
+            read -r confirm
             if [[ "$confirm" != "y" ]] ; then
-                echo "Cancelled"
+                echo -e "$Red Cancelled $Reset"
                 break
             fi
 
             > "$DB_PATH/$tableName.data"
-            echo "All records deleted"
+            echo -e "$Green All records deleted $Reset"
             break
          done 
             ;;
@@ -510,15 +522,16 @@ delete_from_table() {
             pkIndex=$(awk -F: '$3=="PK" {print NR; exit}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$pkIndex" ]] ; then
-                echo "No PK defined" 
+                echo -e "$Red No PK defined $Reset" 
                 break
             fi
 
             while true
             do
-                read -p "Enter PK value to delete: " pkValue
+               echo -ne "${Cyan} Enter PK value to delete: ${Reset}"
+                 read -p pkValue
                 if [[ -z "$pkValue" ]] ; then
-                    echo "Cancelled" 
+                    echo -e "$Red Cancelled $Reset" 
                     break
                 fi
 
@@ -531,12 +544,12 @@ delete_from_table() {
                 after=$(wc -l < "$DB_PATH/tmp.data")
 
                 if [[ $before -eq $after ]]; then
-                    echo "No record found"
+                    echo -e "$Red No record found $Reset"
                     rm "$DB_PATH/tmp.data"
                     break
                 else
                     mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
-                    echo "Record deleted successfully"
+                    echo -e "$Green Record deleted successfully $Reset"
                     break
                 fi
             done
@@ -545,7 +558,8 @@ delete_from_table() {
         3)
         while true
         do
-            read -p "Enter condition (column=value): " condition
+           echo -ne "${Cyan} Enter condition (column=value): ${Reset}"
+            read -r condition
 
             col=$(echo "$condition" | cut -d'=' -f1)
             val=$(echo "$condition" | cut -d'=' -f2)
@@ -553,7 +567,7 @@ delete_from_table() {
             colIndex=$(awk -F: -v col="$col" '$1==col {print NR; exit}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$colIndex" ]] ; then
-                echo "Column not found" 
+                echo -e "$Red Column not found $Reset" 
                 break
             fi
 
@@ -566,12 +580,12 @@ delete_from_table() {
             after=$(wc -l < "$DB_PATH/tmp.data")
 
             if [[ $before -eq $after ]]; then
-                echo "No records matched"
+                echo -e "$Red No records matched $Reset"
                 rm "$DB_PATH/tmp.data"
                 break
             else
                 mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
-                echo "Records deleted successfully"
+                echo -e "$Green Records deleted successfully $Reset"
                 break
             fi
         done
@@ -579,7 +593,7 @@ delete_from_table() {
             ;;
 
         *)
-            echo "Invalid option"
+            echo -e "$Red Invalid option $Reset"
             ;;
         esac
     done
@@ -592,18 +606,19 @@ update_table() {
     local DB_PATH="./DBMS/$dbName"
     local tableName
 
-    # اختيار الجدول
+    
     while true
     do
-        read -p "Enter table name (Enter to cancel): " tableName
+        echo -ne "${Cyan} Enter table name (Enter to cancel): ${Reset}" 
+        read -r tableName
 
         if [[ -z "$tableName" ]] ; then
-            echo "Cancelled" 
+            echo -e "$Red Cancelled $Reset" 
             return
         fi
 
         if [[ ! -f "$DB_PATH/$tableName.meta" ]]  ;then
-            echo "Table not found" 
+            echo -e "$Red Table not found $Reset" 
             continue
         fi
 
@@ -618,7 +633,7 @@ update_table() {
         read option
 
         if [[ -z "$option" ]] ; then
-            echo "Cancelled" 
+            echo -e "$Red Cancelled $Reset" 
             break
         fi
 
@@ -626,23 +641,25 @@ update_table() {
 
         1)
 
-            read -p "Enter column name to update: " col
+       echo -ne  "${Cyan} Enter column name to update: ${Reset}" 
+               read -r col
 
             colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
 
             colPK=$(awk -F: -v c="$col" '$1==c {print $3}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$colIndex" ]] ; then 
-                echo "Column not found" 
+                echo -e "$Red Column not found $Reset" 
                 continue
             fi
 
             if [[ "$colPK" == "PK" ]] ; then
-                echo "Error: primary Key cannot be updated"
+                echo -e "$Red Error: primary Key cannot be updated $Reset"
                 continue
             fi
 
-            read -p "Enter new value: " newValue
+            ech0 -ne  "${Cyan} Enter new value: ${Reset}" 
+           read -r newValue
 
             awk -F: -v OFS=":" -v idx="$colIndex" -v val="$newValue" '
             {
@@ -651,36 +668,39 @@ update_table() {
             }' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
 
             mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
-            echo "All records updated"
+            echo -e "$Green All records updated $Reset"
             ;;
 
         2)
             pkIndex=$(awk -F: '$3=="PK" {print NR}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$pkIndex" ]] ; then
-                echo "No PK defined" 
+                echo -e "$Red No PK defined $Reset" 
                 continue
             fi
 
             
-            read -p "Enter PK value: " pkValue
+           echo -ne  "${Cyan }Enter PK value: ${Reset}" 
+            read -r pkValue
 
-            read -p "Enter column name to update: " col
+            echo -ne "${Cyan} Enter column name to update: ${Reset}"
+            read -r col
             colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
             colPK=$(awk -F: -v c="$col" '$1==c {print $3}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$colIndex" ]] ; then
-                echo "Column not found" 
+                echo -e "$Red Column not found $Reset" 
                 continue
             fi
             
             if [[ "$colPK" == "PK" ]] ; then
-                echo "Error: primary Key cannot be updated"
+                echo -e "$Red Error: primary Key cannot be updated $Reset"
                 continue
             fi
 
 
-            read -p "Enter new value: " newValue
+          echo -ne  "${Cyan} Enter new value: ${Reset}"
+             read -r newValue
 
             awk -F: -v OFS=":" \
                 -v pkIdx="$pkIndex" -v pkVal="$pkValue" \
@@ -698,41 +718,44 @@ update_table() {
             ' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
 
             if [[ $? -ne 0 ]]; then
-                echo "No record found"
+                echo -e "$Red No record found $Reset"
                 rm "$DB_PATH/tmp.data"
             else
                 mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
-                echo "Record updated successfully"
+                echo -e "$Green Record updated successfully $Reset"
             fi
             ;;
 
         3)
-            read -p "Enter condition (column=value): " condition
+            echo -ne "${Cyan}Enter condition (column=value): ${Reset}" 
+           read -r condition
             condCol=$(echo "$condition" | cut -d '=' -f1)
             condVal=$(echo "$condition" | cut -d '=' -f2)
 
             condIndex=$(awk -F: -v c="$condCol" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$condIndex" ]] ; then  
-                echo "Condition column not found" &
+                echo -e "$Red Condition column not found $Reset" &
                 continue
             fi
 
-            read -p "Enter column name to update: " col
+            echo -ne "${Cyan} Enter column name to update: ${Reset}" 
+            read -r col
             colIndex=$(awk -F: -v c="$col" '$1==c {print NR}' "$DB_PATH/$tableName.meta")
 
             if [[ -z "$colIndex" ]] ; then
-                echo "Update column not found" 
+                echo -e "$Red Update column not found $Reset" 
                 continue
             fi
 
             if [[ "$updIndex" -eq "$pkIndex" ]] ; then 
-                echo "Eror:Promary key cannot be updated"
+                echo -e "$Red Eror:Promary key cannot be updated $Reset"
                 break
             fi
 
 
-            read -p "Enter new value: " newValue
+             echo -ne "{$Cyan} Enter new value: ${Reset}" 
+           read -r newValue
 
             awk -F: -v OFS=":" \
                 -v cIdx="$condIndex" -v cVal="$condVal" \
@@ -750,16 +773,16 @@ update_table() {
             ' "$DB_PATH/$tableName.data" > "$DB_PATH/tmp.data"
 
             if [[ $? -ne 0 ]]; then
-                echo "No records matched condition"
+                echo -e "$Red No records matched condition $Reset"
                 rm "$DB_PATH/tmp.data"
             else
                 mv "$DB_PATH/tmp.data" "$DB_PATH/$tableName.data"
-                echo "Records updated successfully"
+                echo -e "$Green Records updated successfully $Reset"
             fi
             ;;
 
         *)
-            echo "Invalid option"
+            echo -e "$Red Invalid option $Reset"
             ;;
         esac
     done
